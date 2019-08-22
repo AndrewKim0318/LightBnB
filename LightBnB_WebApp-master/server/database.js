@@ -61,6 +61,7 @@ const addUser =  function(user) {
   const queryString = `
     INSERT INTO users(name, email, password)
     VALUES ($1, $2, $3);
+    RETURNING *
   `;
   const queryParams = [user.name, user.email, user.password];
   
@@ -124,13 +125,13 @@ const getAllProperties = function(options, limit = 10) {
   // Set conditions
   // If city parameter is in options
   if (options.city) {
-    console.log("searching for city", options.city);
     queryParams.push(`%${options.city}%`);
     queryString += `WHERE city LIKE $${queryParams.length} `;
   }
+
   // If owner_id parameter is in options, only return properties belonging to the owner
   if (options.guest_id) {
-    queryParams.push(option.guest_id);
+    queryParams.push(options.guest_id);
     if (queryParams.length === 1) {
       queryString += `WHERE properties.owner_id = $${queryParams.length}`;
     } else {
@@ -161,7 +162,7 @@ const getAllProperties = function(options, limit = 10) {
     ORDER BY cost_per_night
     LIMIT $${queryParams.length};
     `;
-  } else {
+  } else { // Add the number of properties you want to see
     queryParams.push(limit);
     queryString += `
     GROUP BY properties.id
@@ -170,12 +171,8 @@ const getAllProperties = function(options, limit = 10) {
     `;
   }
 
-  console.log(queryString,queryParams);
-  // Add the number of properties you want to see
-
   return pool.query(queryString, queryParams)
   .then(res => {
-    console.log(res.rows);
     return res.rows;
   });
   
@@ -189,9 +186,30 @@ exports.getAllProperties = getAllProperties;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  const queryString = `
+  INSERT INTO properties (owner_id, title, description, thumbnail_photo_url, cover_photo_url, cost_per_night, parking_spaces, number_of_bathrooms, number_of_bedrooms, country, street, city, province, post_code)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+  RETURNING *;
+  `;
+  const queryParams = [
+    property.owner_id,
+    property.title,
+    property.description,
+    property.thumbnail_photo_url,
+    property.cover_photo_url,
+    property.cost_per_night,
+    property.parking_spaces,
+    property.number_of_bathrooms,
+    property.number_of_bedrooms,
+    property.country,
+    property.street,
+    property.city,
+    property.province,
+    property.post_code,
+  ];
+
+  return pool.query(queryString, queryParams)
+  .then(res => res.rows[0]);
+
 }
 exports.addProperty = addProperty;

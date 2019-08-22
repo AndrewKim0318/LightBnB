@@ -3,7 +3,6 @@ module.exports = function(router, database) {
   router.get('/properties', (req, res) => {
     database.getAllProperties(req.query, 20)
     .then(properties => {
-      console.log(properties);
       res.send({properties})
     })
     .catch(e => {
@@ -20,7 +19,6 @@ module.exports = function(router, database) {
     }
     database.getAllReservations(userId)
     .then(reservations => {
-      console.log(reservations);
       res.send({reservations});
     })
     .catch(e => {

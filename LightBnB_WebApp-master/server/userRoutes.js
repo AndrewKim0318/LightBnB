@@ -8,8 +8,6 @@ module.exports = function(router, database) {
     const user = req.body;
     user.password = bcrypt.hashSync(user.password, 12);
     
-    
-    // database.addUser(user)
     const queryString = `
     INSERT INTO users(name, email, password)
     VALUES ($1, $2, $3);
@@ -35,7 +33,6 @@ module.exports = function(router, database) {
    * @param {String} password encrypted
    */
   const login =  function(email, password) {
-    // return database.getUserWithEmail(email)
 
     const queryString = `
     SELECT *
@@ -44,8 +41,10 @@ module.exports = function(router, database) {
     `;
     const queryParams = [email];
     
-    db.query(queryString, queryParams)
-    .then (res => res.rows[0])
+    return db.query(queryString, queryParams)
+    .then (res => {
+      return res.rows[0]
+    })
     .then(user => {
       if (bcrypt.compareSync(password, user.password)) {
         return user;
@@ -57,16 +56,17 @@ module.exports = function(router, database) {
 
   router.post('/login', (req, res) => {
     const {email, password} = req.body;
+
     login(email, password)
-      .then(user => {
-        if (!user) {
-          res.send({error: "error"});
-          return;
-        }
-        req.session.userId = user.id;
-        res.send({user: {name: user.name, email: user.email, id: user.id}});
-      })
-      .catch(e => res.send(e));
+    .then(user => {
+      if (!user) {
+        res.send({error: "error"});
+        return;
+      }
+      req.session.userId = user.id;
+      res.send({user: {name: user.name, email: user.email, id: user.id}});
+    })
+    .catch(e => res.send(e));
   });
   
   router.post('/logout', (req, res) => {
@@ -81,7 +81,6 @@ module.exports = function(router, database) {
       return;
     }
 
-    // database.getUserWithId(userId)
     const queryString = `
     SELECT *
     FROM users

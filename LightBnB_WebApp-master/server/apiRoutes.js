@@ -4,7 +4,7 @@ module.exports = function(router, database) {
   router.get('/properties', (req, res) => {
 
     // Create values array
-    const queryParams = [];
+    let queryParams = [];
     // Create text string
     let queryString = `
     SELECT properties.*, AVG(property_reviews.rating) as average_rating
@@ -128,8 +128,7 @@ module.exports = function(router, database) {
       req.body.province,
       req.body.post_code,
     ];
-    
-    // database.addProperty({...req.body, owner_id: userId})
+
     db.query(queryString, queryParams)
     .then(res => res.rows)
     .then(property => {
